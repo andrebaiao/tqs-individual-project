@@ -6,6 +6,7 @@
 </head>
 <body>
 <h1>Air Quality</h1> <h1 th:text="${city.name}"></h1>
+<span th:if="${error != null}" th:text="${error}" style="color: red"></span>
 
 <p> <b>Quality of air: </b> <span th:text="${city.air_quality}"></span>% </p>
 <p> <b>Category: </b> <span th:text="${city.category}"></span></p>
