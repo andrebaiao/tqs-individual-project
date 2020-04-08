@@ -5,11 +5,11 @@
     <title>AirQuality</title>
 </head>
 <body>
-<h1>Air Quality</h1> <h1 th:text="${chosen_state}"></h1>
+<h1>Air Quality</h1> <h1 th:text="${city.name}"></h1>
 
-<p> <b>Quality of air: </b> <span th:text="${aqi}"></span>% </p>
-<p> <b>Category: </b> <span th:text="${category}"></span></p>
-<p> <b>Pollutant dominant: </b> <span th:text="${dominant_pollutant}"></span></p>
+<p> <b>Quality of air: </b> <span th:text="${city.air_quality}"></span>% </p>
+<p> <b>Category: </b> <span th:text="${city.category}"></span></p>
+<p> <b>Pollutant dominant: </b> <span th:text="${city.dominant_pollutant}"></span></p>
 
 <button onclick="window.location='airquality'">Voltar</button>
 </body>

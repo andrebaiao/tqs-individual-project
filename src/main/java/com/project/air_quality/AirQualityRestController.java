@@ -14,7 +14,10 @@ import org.springframework.web.client.RestTemplate;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import java.util.ArrayList;
+
 import java.util.List;
+
+import static jdk.nashorn.internal.objects.NativeNumber.valueOf;
 
 // api can convert location to coordinates
 //https://developer.here.com/documentation/geocoding-search-api/dev_guide/topics/get-credentials-ols.html
@@ -64,8 +67,15 @@ public class AirQualityRestController {
         return "index";
     }
 
-    @RequestMapping(path="/airquality", method = RequestMethod.POST)
-    public String getCity(Model model, @RequestParam(name = "chosen_state") String chosen_state ) throws ParseException{
+    @RequestMapping(path="/getCity", method = RequestMethod.POST)
+    @ResponseBody
+    public City getCity(String chosen_state ) throws ParseException{
+
+        if (this.airQualityService.exists(chosen_state)){
+            System.out.println(chosen_state + " encontra-se na cache!");
+            return this.airQualityService.getAirQuality(chosen_state);
+        }
+
         String url = this.HOST_A + "city?city=" + chosen_state + "&state=" + chosen_state +
                         "&country=Portugal&key=" + this.API_KEY_A;
 
@@ -73,19 +83,33 @@ public class AirQualityRestController {
         data = (JSONObject) data.get("data");
         data = (JSONObject) data.get("location");
         JSONArray coords = (JSONArray) data.get("coordinates");
+        double lat =  valueOf(coords.get(1));
+        double lon =  valueOf(coords.get(0));
 
-        url = this.HOST_B + "lat=" + coords.get(1) + "&lon=" + coords.get(0) + "&key=" + this.API_KEY_B;
+        url = this.HOST_B + "lat=" + lat + "&lon=" + lon + "&key=" + this.API_KEY_B;
         data = this.requestApi(url);
         data = (JSONObject) data.get("data");
         data = (JSONObject) data.get("indexes");
-        data = (JSONObject) data.get("baqi"); // have aqi, category and dominant_polluant
+        data = (JSONObject) data.get("baqi"); // have aqi, category and dominant_pollutant
 
-        model.addAttribute("chosen_state", chosen_state);
-        model.addAttribute("aqi", data.get("aqi"));
-        model.addAttribute("category", data.get("category"));
-        model.addAttribute("dominant_pollutant", data.get("dominant_pollutant"));
 
+        return this.airQualityService.save(new City(chosen_state, lat, lon,
+                                            (long) data.get("aqi"),
+                                            (String) data.get("category"),
+                                            (String) data.get("dominant_pollutant")));
+    }
+
+    @RequestMapping(path="/airquality", method = RequestMethod.POST)
+    public String airQuality(Model model, @RequestParam(name = "chosen_state") String chosen_state) throws ParseException{
+        City new_city = this.getCity(chosen_state);
+        model.addAttribute("city", new_city);
         return "baqi";
     }
 
+
+    @RequestMapping(path="/getCities", method = RequestMethod.GET)
+    @ResponseBody
+    public List<City> getAllCities(){
+        return this.airQualityService.getAllCitiesSave();
+    }
 }
