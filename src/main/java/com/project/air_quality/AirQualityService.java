@@ -12,4 +12,5 @@ public interface AirQualityService {
     void countHits();
     void countMisses();
     HashMap<String, Integer> getStatistic();
+    void deleteCity(City delCity);
 }

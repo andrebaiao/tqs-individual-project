@@ -2,6 +2,7 @@ package com.project.air_quality;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
+import java.util.Calendar;
 
 @Entity
 @Table(name = "city")
@@ -19,6 +20,8 @@ public class City {
     private long air_quality;
     private String category;
     private String dominant_pollutant;
+
+    private final Calendar timeOfRequest = Calendar.getInstance();
 
     public City() {
     }
@@ -80,5 +83,9 @@ public class City {
 
     public String getDominant_pollutant(){
         return this.dominant_pollutant;
+    }
+
+    public Calendar getTimeOfRequest(){
+        return this.timeOfRequest;
     }
 }

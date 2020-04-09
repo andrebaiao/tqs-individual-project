@@ -5,15 +5,19 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import static jdk.nashorn.internal.objects.NativeNumber.valueOf;
 
 // documentation apis:
@@ -57,16 +61,31 @@ public class AirQualityRestController {
         return "index";
     }
 
-    @RequestMapping(path="/getCity", method = RequestMethod.POST)
+    @RequestMapping(path="/getCity", method = RequestMethod.GET)
     @ResponseBody
-    public ResponseEntity<City> getCity(String chosen_state ) throws ParseException{
-        if (this.airQualityService.exists(chosen_state)){
-            System.out.println(chosen_state + " encontra-se na cache!");
-            this.airQualityService.countHits();
-            return new ResponseEntity<>(this.airQualityService.getAirQuality(chosen_state), HttpStatus.OK);
+    public ResponseEntity<City> getCity(@RequestParam String city_name) throws ParseException, InterruptedException {
+
+        // Simulation time to live.
+        // If city is in cache and their time of request when entry in cache as bigger than this time plus
+        // one minute, need to be remove.
+        Calendar target_date = Calendar.getInstance();
+        if (this.airQualityService.exists(city_name)){
+
+            City target_city = this.airQualityService.getAirQuality(city_name);
+            Calendar requestDateTTL = target_city.getTimeOfRequest();
+            requestDateTTL.add(Calendar.MINUTE, 1);
+
+            if(requestDateTTL.compareTo(target_date) < 0) {
+                this.airQualityService.deleteCity(target_city);
+            } else {
+                System.out.println(city_name + " encontra-se na cache!");
+
+                this.airQualityService.countHits();
+                return new ResponseEntity<>(target_city, HttpStatus.OK);
+            }
         }
 
-        String url = this.HOST_A + "city?city=" + chosen_state + "&state=" + chosen_state +
+        String url = this.HOST_A + "city?city=" + city_name + "&state=" + city_name +
                 "&country=Portugal&key=" + this.API_KEY_A;;
         JSONObject data;
 
@@ -74,7 +93,7 @@ public class AirQualityRestController {
             data = this.requestApi(url);
         }
         catch (Exception e){
-            return new ResponseEntity<City>(new City(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new City(), HttpStatus.NOT_FOUND);
         }
 
         data = (JSONObject) data.get("data");
@@ -88,23 +107,25 @@ public class AirQualityRestController {
         try{
             data = this.requestApi(url);
         }catch (Exception e){
-            return new ResponseEntity<City>(new City(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new City(), HttpStatus.NOT_FOUND);
         }
 
         data = (JSONObject) data.get("data");
         data = (JSONObject) data.get("indexes");
         data = (JSONObject) data.get("baqi"); // have aqi, category and dominant_pollutant
 
+        City new_city = this.airQualityService.save(new City(city_name, lat, lon,
+                (long) data.get("aqi"),
+                (String) data.get("category"),
+                (String) data.get("dominant_pollutant")));
+
         this.airQualityService.countMisses();
 
-        return new ResponseEntity<>(this.airQualityService.save(new City(chosen_state, lat, lon,
-                                            (long) data.get("aqi"),
-                                            (String) data.get("category"),
-                                            (String) data.get("dominant_pollutant"))), HttpStatus.OK);
+        return new ResponseEntity<>(new_city, HttpStatus.OK);
     }
 
     @RequestMapping(path="/airquality", method = RequestMethod.POST)
-    public String airQuality(Model model, @RequestParam(name = "chosen_state") String chosen_state) throws ParseException{
+    public String airQuality(Model model, @RequestParam(name = "chosen_state") String chosen_state) throws ParseException, InterruptedException {
         ResponseEntity<City> response = this.getCity(chosen_state);
         HttpStatus statuscode = response.getStatusCode();
 
@@ -128,4 +149,5 @@ public class AirQualityRestController {
     public HashMap<String, Integer> getStatistics(){
         return this.airQualityService.getStatistic();
     }
+
 }

@@ -52,8 +52,29 @@ public class AirQualityServiceImpl implements AirQualityService {
         this.misses ++;
     }
 
+    public void setHits(int number){
+        this.hits = number;
+    }
 
+    public void setMisses(int number){
+        this.misses = number;
+    }
 
+    public int getMisses(){
+        return this.misses;
+    }
+
+    public int getHits(){
+        return this.hits;
+    }
+
+    public int getCountOfRequests(){
+        return this.misses + this.hits;
+    }
+
+    public void deleteCity(City delCity){
+        this.cityRepository.delete(delCity);
+    }
 
     @Override
     public HashMap<String, Integer> getStatistic() {

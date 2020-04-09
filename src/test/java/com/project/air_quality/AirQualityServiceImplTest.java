@@ -28,13 +28,15 @@ public class AirQualityServiceImplTest {
     public void setUp() {
         City braga = new City("Braga", 48.12, -2.0, 48, "Great", "om2");
         City lisboa = new City("Lisboa", 48.12, -2.0, 48, "Great", "om2");
-        City acores = new City("Açores", 48.12, -2.0, 48, "Great", "om2");
+        City aveiro = new City("Aveiro", 48.12, -2.0, 48, "Great", "om2");
 
-        List<City> allCities = Arrays.asList(braga, lisboa,acores);
+        List<City> allCities = Arrays.asList(braga, lisboa,aveiro);
+
+        airQualityService.setMisses(3);
 
         Mockito.when(cityRepository.findByName(braga.getName())).thenReturn(braga);
         Mockito.when(cityRepository.findByName(lisboa.getName())).thenReturn(lisboa);
-        Mockito.when(cityRepository.findByName(acores.getName())).thenReturn(acores);
+        Mockito.when(cityRepository.findByName(aveiro.getName())).thenReturn(aveiro);
         Mockito.when(cityRepository.findByName("wrong_name")).thenReturn(null);
         Mockito.when(cityRepository.findById(braga.getId())).thenReturn(Optional.of(braga));
         Mockito.when(cityRepository.findAll()).thenReturn(allCities);
@@ -47,6 +49,7 @@ public class AirQualityServiceImplTest {
         City found = airQualityService.getAirQuality(name);
 
         assertThat(found.getName()).isEqualTo(name);
+        verifyFindByNameIsCalledOnce("Braga");
     }
 
     @Test
@@ -58,7 +61,7 @@ public class AirQualityServiceImplTest {
     }
 
     @Test
-    public void whenValidName_themCityShouldExist(){
+    public void whenValidName_thenCityShouldExist(){
         boolean doesCityExist = airQualityService.exists("Açores");
         assertThat(doesCityExist).isEqualTo(true);
 
