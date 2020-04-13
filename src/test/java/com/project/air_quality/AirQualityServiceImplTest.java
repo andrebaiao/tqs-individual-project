@@ -10,6 +10,7 @@ import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,10 +63,10 @@ public class AirQualityServiceImplTest {
 
     @Test
     public void whenValidName_thenCityShouldExist(){
-        boolean doesCityExist = airQualityService.exists("Açores");
+        boolean doesCityExist = airQualityService.exists("Aveiro");
         assertThat(doesCityExist).isEqualTo(true);
 
-        verifyFindByNameIsCalledOnce("Açores");
+        verifyFindByNameIsCalledOnce("Aveiro");
     }
 
     @Test
@@ -95,13 +96,21 @@ public class AirQualityServiceImplTest {
     public void given3City_whengetAll_thenReturn3Records() {
         City braga = new City("Braga", 48.12, -2.0, 48, "Great", "om2");
         City lisboa = new City("Lisboa", 48.12, -2.0, 48, "Great", "om2");
-        City acores = new City("Açores", 48.12, -2.0, 48, "Great", "om2");
+        City aveiro = new City("Aveiro", 48.12, -2.0, 48, "Great", "om2");
 
         List<City> allCities = airQualityService.getAllCitiesSave();
         verifyFindAllCitiesIsCalledOnce();
-        assertThat(allCities).hasSize(3).extracting(City::getName).contains(braga.getName(), lisboa.getName(), acores.getName());
+        assertThat(allCities).hasSize(3).extracting(City::getName).contains(braga.getName(), lisboa.getName(), aveiro.getName());
     }
 
+    @Test
+    public void whenGetStatistics_thenReturnHasMap() {
+        HashMap<String, Integer> statistics =  airQualityService.getStatistic();
+
+        assertThat(statistics.get("Number of requests: ")).isEqualTo(3);
+        assertThat(statistics.get("Number of hits: ")).isEqualTo(0);
+        assertThat(statistics.get("Number of misses: ")).isEqualTo(3);
+    }
 
 
     private void verifyFindByNameIsCalledOnce(String name_city) {

@@ -5,18 +5,13 @@ import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import static jdk.nashorn.internal.objects.NativeNumber.valueOf;
 
@@ -27,14 +22,11 @@ import static jdk.nashorn.internal.objects.NativeNumber.valueOf;
 @Controller
 @RequestMapping("/api")
 public class AirQualityRestController {
-    private JSONParser parser = new JSONParser();
-    private final String API_KEY_A = "092f923d-179b-4ce6-b8ea-beee3c882c71";
-    private final String HOST_A = "https://api.airvisual.com/v2/";
-    //example url:
-    //https://api.breezometer.com/air-quality/v2/current-conditions?lat={latitude}&lon={longitude}&key=YOUR_API_KEY
-    private final String HOST_B = "https://api.breezometer.com/air-quality/v2/current-conditions?";
-    private final String API_KEY_B = "d77c130eed884f7c85c34247a174eadc";
 
+    private JSONParser parser = new JSONParser();
+    private static final String API_KEY_A = "092f923d-179b-4ce6-b8ea-beee3c882c71";
+    private static
+    final String HOST_A = "https://api.airvisual.com/v2/";
     private RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
@@ -45,9 +37,9 @@ public class AirQualityRestController {
         return (JSONObject) parser.parse(response);
     }
 
-    @RequestMapping(method = RequestMethod.GET, value="/airquality")
+    @GetMapping(value="/airquality")
     public String start(Model model) throws ParseException{
-        String url = this.HOST_A + "states?country=Portugal&key=" + this.API_KEY_A;
+        String url = HOST_A + "states?country=Portugal&key=" + API_KEY_A;
         JSONObject result = this.requestApi(url);
         JSONArray data = (JSONArray) result.get("data");
 
@@ -61,7 +53,7 @@ public class AirQualityRestController {
         return "index";
     }
 
-    @RequestMapping(path="/getCity", method = RequestMethod.GET)
+    @GetMapping(path="/getCity")
     @ResponseBody
     public ResponseEntity<City> getCity(@RequestParam String city_name) throws ParseException, InterruptedException {
 
@@ -78,15 +70,13 @@ public class AirQualityRestController {
             if(requestDateTTL.compareTo(target_date) < 0) {
                 this.airQualityService.deleteCity(target_city);
             } else {
-                System.out.println(city_name + " encontra-se na cache!");
-
                 this.airQualityService.countHits();
                 return new ResponseEntity<>(target_city, HttpStatus.OK);
             }
         }
 
-        String url = this.HOST_A + "city?city=" + city_name + "&state=" + city_name +
-                "&country=Portugal&key=" + this.API_KEY_A;;
+        String url = HOST_A + "city?city=" + city_name + "&state=" + city_name +
+                "&country=Portugal&key=" + API_KEY_A;
         JSONObject data;
 
         try {
@@ -102,7 +92,11 @@ public class AirQualityRestController {
         double lat =  valueOf(coords.get(1));
         double lon =  valueOf(coords.get(0));
 
-        url = this.HOST_B + "lat=" + lat + "&lon=" + lon + "&key=" + this.API_KEY_B;
+        //example url:
+        //https://api.breezometer.com/air-quality/v2/current-conditions?lat={latitude}&lon={longitude}&key=YOUR_API_KEY
+        String API_KEY_B = "d77c130eed884f7c85c34247a174eadc";
+        String HOST_B = "https://api.breezometer.com/air-quality/v2/current-conditions?";
+        url = HOST_B + "lat=" + lat + "&lon=" + lon + "&key=" + API_KEY_B;
 
         try{
             data = this.requestApi(url);
@@ -124,7 +118,7 @@ public class AirQualityRestController {
         return new ResponseEntity<>(new_city, HttpStatus.OK);
     }
 
-    @RequestMapping(path="/airquality", method = RequestMethod.POST)
+    @PostMapping(path="/airquality")
     public String airQuality(Model model, @RequestParam(name = "chosen_state") String chosen_state) throws ParseException, InterruptedException {
         ResponseEntity<City> response = this.getCity(chosen_state);
         HttpStatus statuscode = response.getStatusCode();
@@ -138,15 +132,15 @@ public class AirQualityRestController {
         return "baqi";
     }
 
-    @RequestMapping(path="/getCities", method = RequestMethod.GET)
+    @GetMapping(path="/getCities")
     @ResponseBody
     public ResponseEntity<List<City>> getAllCities(){
         return new ResponseEntity<>(this.airQualityService.getAllCitiesSave(), HttpStatus.OK);
     }
 
-    @RequestMapping(path = "/statistics", method = RequestMethod.GET)
+    @GetMapping(path = "/statistics")
     @ResponseBody
-    public HashMap<String, Integer> getStatistics(){
+    public Map<String, Integer> getStatistics(){
         return this.airQualityService.getStatistic();
     }
 

@@ -1,12 +1,8 @@
 package com.project.air_quality;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.HashMap;
 import java.util.List;
-
-import static com.sun.deploy.perf.DeployPerfUtil.put;
 
 @Service
 public class AirQualityServiceImpl implements AirQualityService {
@@ -78,12 +74,10 @@ public class AirQualityServiceImpl implements AirQualityService {
 
     @Override
     public HashMap<String, Integer> getStatistic() {
-        int misses = this.misses;
-        int hits = this.hits;
-        return new HashMap<String, Integer>(){{
-            put("Number of requests: ", misses + hits);
-            put("Number of hits: ", hits);
-            put("Number of misses: ", misses);
-        }};
+        HashMap<String, Integer> statistics = new HashMap<>();
+        statistics.put("Number of requests: ", this.misses+this.hits);
+        statistics.put("Number of hits: ", this.hits);
+        statistics.put("Number of misses: ", this.misses);
+        return statistics;
     }
 }
