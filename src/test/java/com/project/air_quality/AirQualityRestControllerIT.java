@@ -66,7 +66,7 @@ public class AirQualityRestControllerIT {
 
     @Test
     public void whenSearchingFirstTimeCity_thenReturnTheirAirQuality() {
-        // Checking if the city we request is saved and
+        // Checking if the city we   request is saved and
         // as is first time searched, misses should be one and hits equal to 0
         ResponseEntity<City>  response = restTemplate.getForEntity("/api/getCity?city_name=Braga", City.class);
 

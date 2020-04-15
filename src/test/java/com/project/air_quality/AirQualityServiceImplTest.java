@@ -17,7 +17,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-public class AirQualityServiceImplTest {
+public class    AirQualityServiceImplTest {
 
     @Mock( lenient = true)
     private CityRepository cityRepository;
